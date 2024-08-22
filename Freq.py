@@ -62,7 +62,7 @@ if uploaded_files:
 
     # Aggiungi la linea della media filtrata
     fig.add_trace(go.Scatter(x=filtered_combined_df['Frequency (MHz)'], y=filtered_combined_df['Average dB'],
-                             mode='lines', name='Average', line=dict(color='black', width=3, dash='dash')))
+                             mode='lines', name='Average', line=dict(color='yellow')))
 
     # Aggiorna layout
     fig.update_layout(title='Frequency vs dB',
