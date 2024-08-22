@@ -12,6 +12,7 @@ uploaded_files = st.file_uploader("Choose CSV files", type="csv", accept_multipl
 
 if uploaded_files:
     dfs = []
+    file_names = []
 
     # Processamento di ogni file caricato
     for file in uploaded_files:
@@ -19,21 +20,14 @@ if uploaded_files:
         df[0] = df[0].str.replace(',', '.').astype(float) / 1e6  # Converti in MHz
         df[1] = df[1].str.replace(',', '.').astype(float)  # Valori dB
         dfs.append(df)
+        file_names.append(file.name)
 
     # Assumiamo che tutte le frequenze siano le stesse in ogni file per semplificare la media
     combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
     combined_df.columns = ['Frequency (MHz)', 'Average dB']
 
-    # Analisi: rilevazione di picchi (esempio semplice)
-    st.sidebar.header("Analysis")
-    peak_detection = st.sidebar.checkbox("Detect Peaks")
-
-    if peak_detection:
-        peak_threshold = st.sidebar.slider("Peak Detection Threshold", min_db, max_db, (max_db - (max_db - min_db) / 4))
-        peaks = filtered_df[filtered_df['Average dB'] > peak_threshold]
-        st.write("### Detected Peaks", peaks)
-    else:
-        peaks = pd.DataFrame(columns=combined_df.columns)
+    # Visualizzazione dei dati medi
+    st.write("### Average Data Table", combined_df)
 
     # Creazione del grafico
     fig = go.Figure()
@@ -71,29 +65,4 @@ if uploaded_files:
                               (combined_df['Average dB'] >= min_db) & (combined_df['Average dB'] <= max_db)]
 
     # Mostra tabella filtrata
-    st.write("### Filtered Average Data Table", filtered_df)    
-    
-    # Aggiungi picchi rilevati al grafico
-    if peak_detection and not peaks.empty:
-        fig.add_scatter(x=peaks['Frequency (MHz)'], y=peaks['Average dB'], mode='markers', name='Peaks')
-
-    st.plotly_chart(fig)
-
-    # Download dei dati processati e filtrati
-    csv = filtered_df.to_csv(index=False)
-    st.download_button(
-        label="Download Processed CSV",
-        data=csv,
-        file_name='filtered_averaged_frequencies.csv',
-        mime='text/csv',
-    )
-
-    # Download dei picchi rilevati
-    if peak_detection and not peaks.empty:
-        peaks_csv = peaks.to_csv(index=False)
-        st.download_button(
-            label="Download Detected Peaks CSV",
-        data=peaks_csv,
-        file_name='detected_peaks.csv',
-        mime='text/csv',
-    )
+    st.write("### Filtered Average Data Table", filtered_df)
