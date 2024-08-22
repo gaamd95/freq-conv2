@@ -4,20 +4,20 @@ import plotly.graph_objects as go
 import numpy as np
 
 # Titolo dell'applicazione
-st.title("Frequency Monitoring and Analysis with Averaging Options")
+st.title("Monitoraggio e Analisi delle Frequenze con Opzioni di Media")
 
 # Caricamento di più file CSV
-uploaded_files = st.file_uploader("Choose CSV files", type="csv", accept_multiple_files=True)
+uploaded_files = st.file_uploader("Scegli file CSV", type="csv", accept_multiple_files=True)
 
 # Selettore del tipo di media
 average_type = st.sidebar.selectbox(
-    "Select Average Type",
-    ("Mean", "Max")
+    "Seleziona Tipo di Media",
+    ("Media", "Massimo")
 )
 
 if uploaded_files:
     dfs = []
-    file_names = []
+    nomi_file = []
 
     # Processamento di ogni file caricato
     for file in uploaded_files:
@@ -25,25 +25,25 @@ if uploaded_files:
         df[0] = df[0].str.replace(',', '.').astype(float) / 1e6  # Converti in MHz
         df[1] = df[1].str.replace(',', '.').astype(float)  # Valori dB
         dfs.append(df)
-        file_names.append(file.name)
+        nomi_file.append(file.name)
 
     # Calcolo della media o del massimo
-    if average_type == "Mean":
+    if average_type == "Media":
         combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
-    elif average_type == "Max":
+    elif average_type == "Massimo":
         combined_df = pd.concat(dfs).groupby(0).max().reset_index()
     
-    combined_df.columns = ['Frequency (MHz)', f'{average_type} dB']
+    combined_df.columns = ['Frequenza (MHz)', f'{average_type} dB']
 
     # Filtri per frequenza e dB
-    st.sidebar.header("Filter Data")
+    st.sidebar.header("Filtra Dati")
     min_freq, max_freq = st.sidebar.slider(
-        "Frequency Range (MHz)", float(combined_df['Frequency (MHz)'].min()), float(combined_df['Frequency (MHz)'].max()), 
-        (float(combined_df['Frequency (MHz)'].min()), float(combined_df['Frequency (MHz)'].max()))
+        "Intervallo di Frequenza (MHz)", float(combined_df['Frequenza (MHz)'].min()), float(combined_df['Frequenza (MHz)'].max()), 
+        (float(combined_df['Frequenza (MHz)'].min()), float(combined_df['Frequenza (MHz)'].max()))
     )
 
     min_db, max_db = st.sidebar.slider(
-        "dB Range", float(combined_df[f'{average_type} dB'].min()), float(combined_df[f'{average_type} dB'].max()), 
+        "Intervallo dB", float(combined_df[f'{average_type} dB'].min()), float(combined_df[f'{average_type} dB'].max()), 
         (float(combined_df[f'{average_type} dB'].min()), float(combined_df[f'{average_type} dB'].max()))
     )
 
@@ -54,29 +54,29 @@ if uploaded_files:
         filtered_dfs.append(filtered_df)
 
     # Filtraggio della media o del massimo
-    filtered_combined_df = combined_df[(combined_df['Frequency (MHz)'] >= min_freq) &
-                                       (combined_df['Frequency (MHz)'] <= max_freq) &
+    filtered_combined_df = combined_df[(combined_df['Frequenza (MHz)'] >= min_freq) &
+                                       (combined_df['Frequenza (MHz)'] <= max_freq) &
                                        (combined_df[f'{average_type} dB'] >= min_db) &
                                        (combined_df[f'{average_type} dB'] <= max_db)]
 
     # Visualizzazione della tabella filtrata
-    st.write(f"### Filtered {average_type} Data Table", filtered_combined_df)
+    st.write(f"### Tabella dei Dati Filtrati ({average_type})", filtered_combined_df)
 
     # Creazione del grafico
     fig = go.Figure()
 
     # Aggiungi una linea per ogni CSV filtrato
     for i, df in enumerate(filtered_dfs):
-        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {file_names[i]}"))
+        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {nomi_file[i]}"))
 
     # Aggiungi la linea della media o del massimo filtrato
-    fig.add_trace(go.Scatter(x=filtered_combined_df['Frequency (MHz)'], y=filtered_combined_df[f'{average_type} dB'],
-                             mode='lines', name=f'{average_type}', line=dict(color='green')))
+    fig.add_trace(go.Scatter(x=filtered_combined_df['Frequenza (MHz)'], y=filtered_combined_df[f'{average_type} dB'],
+                             mode='lines', name=f'{average_type}', line=dict(color='lime')))
 
     # Aggiorna layout
-    fig.update_layout(title='Frequency vs dB',
-                      xaxis_title='Frequency (MHz)',
+    fig.update_layout(title='Frequenza vs dB',
+                      xaxis_title='Frequenza (MHz)',
                       yaxis_title='dB',
-                      legend_title='Datasets')
+                      legend_title='Dataset')
 
     st.plotly_chart(fig)
