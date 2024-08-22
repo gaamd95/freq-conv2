@@ -26,28 +26,6 @@ if uploaded_files:
     combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
     combined_df.columns = ['Frequency (MHz)', 'Average dB']
 
-    # Visualizzazione dei dati medi
-    st.write("### Average Data Table", combined_df)
-
-    # Creazione del grafico
-    fig = go.Figure()
-
-    # Aggiungi una linea per ogni CSV
-    for i, df in enumerate(dfs):
-        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {file_names[i]}"))
-
-    # Aggiungi la linea della media
-    fig.add_trace(go.Scatter(x=combined_df['Frequency (MHz)'], y=combined_df['Average dB'],
-                             mode='lines', name='Average', line=dict(color='black', width=3, dash='dash')))
-
-    # Aggiorna layout
-    fig.update_layout(title='Frequency vs dB',
-                      xaxis_title='Frequency (MHz)',
-                      yaxis_title='dB',
-                      legend_title='Datasets')
-
-    st.plotly_chart(fig)
-
     # Filtri per frequenza e dB
     st.sidebar.header("Filter Data")
     min_freq, max_freq = st.sidebar.slider(
@@ -61,8 +39,38 @@ if uploaded_files:
     )
 
     # Filtraggio dei dati in base ai selettori
-    filtered_df = combined_df[(combined_df['Frequency (MHz)'] >= min_freq) & (combined_df['Frequency (MHz)'] <= max_freq) &
-                              (combined_df['Average dB'] >= min_db) & (combined_df['Average dB'] <= max_db)]
+    filtered_dfs = []
+    for df in dfs:
+        filtered_df = df[(df[0] >= min_freq) & (df[0] <= max_freq) & (df[1] >= min_db) & (df[1] <= max_db)]
+        filtered_dfs.append(filtered_df)
 
-    # Mostra tabella filtrata
-    st.write("### Filtered Average Data Table", filtered_df)
+    # Filtraggio della media
+    filtered_combined_df = combined_df[(combined_df['Frequency (MHz)'] >= min_freq) &
+                                       (combined_df['Frequency (MHz)'] <= max_freq) &
+                                       (combined_df['Average dB'] >= min_db) &
+                                       (combined_df['Average dB'] <= max_db)]
+
+    # Visualizzazione della tabella filtrata
+    st.write("### Filtered Average Data Table", filtered_combined_df)
+
+    # Creazione del grafico
+    fig = go.Figure()
+
+    # Aggiungi una linea per ogni CSV filtrato
+    for i, df in enumerate(filtered_dfs):
+        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {file_names[i]}"))
+
+    # Aggiungi la linea della media filtrata
+    fig.add_trace(go.Scatter(x=filtered_combined_df['Frequency (MHz)'], y=filtered_combined_df['Average dB'],
+                             mode='lines', name='Average', line=dict(color='black', width=3, dash='dash')))
+
+    # Aggiorna layout
+    fig.update_layout(title='Frequency vs dB',
+                      xaxis_title='Frequency (MHz)',
+                      yaxis_title='dB',
+                      legend_title='Datasets')
+
+    st.plotly_chart(fig)
+
+    # Sezione di analisi aggiuntiva (se necessaria)
+    # Puoi inserire qui ulteriori funzionalità di analisi dei dati, come analisi statistica o altre visualizzazioni.
