@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import numpy as np
 
 # Titolo dell'applicazione
@@ -23,8 +24,35 @@ if uploaded_files:
     combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
     combined_df.columns = ['Frequency (MHz)', 'Average dB']
 
-    # Visualizzazione dei dati medi
-    st.write("### Average Data Table", combined_df)
+    # Analisi: rilevazione di picchi (esempio semplice)
+    st.sidebar.header("Analysis")
+    peak_detection = st.sidebar.checkbox("Detect Peaks")
+
+    if peak_detection:
+        peak_threshold = st.sidebar.slider("Peak Detection Threshold", min_db, max_db, (max_db - (max_db - min_db) / 4))
+        peaks = filtered_df[filtered_df['Average dB'] > peak_threshold]
+        st.write("### Detected Peaks", peaks)
+    else:
+        peaks = pd.DataFrame(columns=combined_df.columns)
+
+    # Creazione del grafico
+    fig = go.Figure()
+
+    # Aggiungi una linea per ogni CSV
+    for i, df in enumerate(dfs):
+        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {file_names[i]}"))
+
+    # Aggiungi la linea della media
+    fig.add_trace(go.Scatter(x=combined_df['Frequency (MHz)'], y=combined_df['Average dB'],
+                             mode='lines', name='Average', line=dict(color='black', width=3, dash='dash')))
+
+    # Aggiorna layout
+    fig.update_layout(title='Frequency vs dB',
+                      xaxis_title='Frequency (MHz)',
+                      yaxis_title='dB',
+                      legend_title='Datasets')
+
+    st.plotly_chart(fig)
 
     # Filtri per frequenza e dB
     st.sidebar.header("Filter Data")
@@ -38,23 +66,12 @@ if uploaded_files:
         (float(combined_df['Average dB'].min()), float(combined_df['Average dB'].max()))
     )
 
-    # Applicazione dei filtri
-    filtered_df = combined_df[(combined_df['Frequency (MHz)'] >= min_freq) & (combined_df['Frequency (MHz)'] <= max_freq) & 
+    # Filtraggio dei dati in base ai selettori
+    filtered_df = combined_df[(combined_df['Frequency (MHz)'] >= min_freq) & (combined_df['Frequency (MHz)'] <= max_freq) &
                               (combined_df['Average dB'] >= min_db) & (combined_df['Average dB'] <= max_db)]
 
-    # Analisi: rilevazione di picchi (esempio semplice)
-    st.sidebar.header("Analysis")
-    peak_detection = st.sidebar.checkbox("Detect Peaks")
-
-    if peak_detection:
-        peak_threshold = st.sidebar.slider("Peak Detection Threshold", min_db, max_db, (max_db - (max_db - min_db) / 4))
-        peaks = filtered_df[filtered_df['Average dB'] > peak_threshold]
-        st.write("### Detected Peaks", peaks)
-    else:
-        peaks = pd.DataFrame(columns=combined_df.columns)
-
-    # Grafico interattivo
-    fig = px.line(filtered_df, x='Frequency (MHz)', y='Average dB', title='Average Frequency vs Average dB')
+    # Mostra tabella filtrata
+    st.write("### Filtered Average Data Table", filtered_df)    
     
     # Aggiungi picchi rilevati al grafico
     if peak_detection and not peaks.empty:
