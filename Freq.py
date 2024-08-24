@@ -33,7 +33,7 @@ if uploaded_files:
     # Calcolo della media o del massimo
     if average_type == "Media":
         combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
-    elif average_type == "Massimo":
+    else average_type == "Massimo":
         combined_df = pd.concat(dfs).groupby(0).max().reset_index()
     
     combined_df.columns = ['Frequenza (MHz)', f'{average_type} dB']
