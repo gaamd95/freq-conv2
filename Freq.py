@@ -33,8 +33,56 @@ if uploaded_files:
     # Calcolo della media o del massimo
     if average_type == "Media":
         combined_df = pd.concat(dfs).groupby(0).mean().reset_index()
-    else:
+    elif average_type == "Massimo":
         combined_df = pd.concat(dfs).groupby(0).max().reset_index()
+    
+    combined_df.columns = ['Frequenza (MHz)', f'{average_type} dB']
+
+    # Filtri per frequenza e dB
+    st.sidebar.header("Filtra Dati")
+    min_freq, max_freq = st.sidebar.slider(
+        "Intervallo di Frequenza (MHz)", float(combined_df['Frequenza (MHz)'].min()), float(combined_df['Frequenza (MHz)'].max()), 
+        (float(combined_df['Frequenza (MHz)'].min()), float(combined_df['Frequenza (MHz)'].max()))
+    )
+
+    min_db, max_db = st.sidebar.slider(
+        "Intervallo dB", float(combined_df[f'{average_type} dB'].min()), float(combined_df[f'{average_type} dB'].max()), 
+        (float(combined_df[f'{average_type} dB'].min()), float(combined_df[f'{average_type} dB'].max()))
+    )
+
+    # Filtraggio dei dati in base ai selettori
+    filtered_dfs = []
+    for df in dfs:
+        filtered_df = df[(df[0] >= min_freq) & (df[0] <= max_freq) & (df[1] >= min_db) & (df[1] <= max_db)]
+        filtered_dfs.append(filtered_df)
+
+    # Filtraggio della media o del massimo
+    filtered_combined_df = combined_df[(combined_df['Frequenza (MHz)'] >= min_freq) &
+                                       (combined_df['Frequenza (MHz)'] <= max_freq) &
+                                       (combined_df[f'{average_type} dB'] >= min_db) &
+                                       (combined_df[f'{average_type} dB'] <= max_db)]
+
+    # Visualizzazione della tabella filtrata
+    st.write(f"### Tabella dei Dati Filtrati ({average_type})", filtered_combined_df)
+
+    # Creazione del grafico
+    fig = go.Figure()
+
+    # Aggiungi una linea per ogni CSV filtrato
+    for i, df in enumerate(filtered_dfs):
+        fig.add_trace(go.Scatter(x=df[0], y=df[1], mode='lines', name=f"Dataset {nomi_file[i]}"))
+
+    # Aggiungi la linea della media o del massimo filtrato
+    fig.add_trace(go.Scatter(x=filtered_combined_df['Frequenza (MHz)'], y=filtered_combined_df[f'{average_type} dB'],
+                             mode='lines', name=f'{average_type}', line=dict(color='lime')))
+
+    # Aggiorna layout
+    fig.update_layout(title='Frequenza vs dB',
+                      xaxis_title='Frequenza (MHz)',
+                      yaxis_title='dB',
+                      legend_title='Dataset')
+
+    st.plotly_chart(fig)
 
     # Ordinamento delle frequenze per livello di disturbo
     combined_df.sort_values(by=1, inplace=True)
@@ -55,7 +103,7 @@ if uploaded_files:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=combined_df[0], y=combined_df[1], mode='lines', name='Disturbo'))
     for freq in selected_frequencies:
-        fig.add_trace(go.Scatter(x=[freq], y=[combined_df.loc[combined_df[0] == freq, 1].values[0]],
+        fig.add_trace(go.Scatter(x=[combined_df.loc[combined_df[0] == freq, 1].values[0]], y=[freq],
                                  mode='markers', marker=dict(color='red', size=10), name=f'Frequenza {freq} MHz'))
 
     st.plotly_chart(fig)
