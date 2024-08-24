@@ -98,7 +98,10 @@ if uploaded_files:
 
     st.write(f"Frequenze selezionate per {num_mics} radiomicrofoni:")
     st.write(selected_frequencies)
-
+    
+    # Assicurati che il DataFrame sia ordinato per la frequenza
+    combined_df.sort_values(by='Frequenza (MHz)', inplace=True)
+    
     # Visualizzazione dei risultati con un grafico migliorato
     fig = go.Figure()
 
