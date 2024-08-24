@@ -113,14 +113,23 @@ if uploaded_files:
         name='Disturbo',
         line=dict(color='royalblue')
     ))
-
+    
+    # Aggiunta di marker per le frequenze selezionate
+    for freq in selected_frequencies:
+        fig.add_trace(go.Scatter(
+            x=[freq], 
+            y=[combined_df.loc[combined_df['Frequenza (MHz)'] == freq, f'{average_type} dB'].values[0]],
+            mode='markers', 
+            marker=dict(color='red', size=12, symbol='circle'),
+            name=f'Frequenza {freq:.2f} MHz'
+        ))
+        
     # Aggiunta di aree ombreggiate per le frequenze selezionate
     for freq in selected_frequencies:
         fig.add_vrect(
             x0=freq - 0.05, x1=freq + 0.05, 
             fillcolor="LightSalmon", opacity=1, 
-            layer="below", line_width=0,
-            annotation_text=f"{freq:.2f} MHz", annotation_position="top left"
+            layer="below", line_width=0.1
         )
 
     # Miglioramenti del layout
