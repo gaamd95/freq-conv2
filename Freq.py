@@ -85,12 +85,12 @@ if uploaded_files:
     st.plotly_chart(fig)
 
     # Ordinamento delle frequenze per livello di disturbo
-    combined_df.sort_values(by=0, inplace=True)
+    combined_df.sort_values(by=1, inplace=True)
 
     # Selezione delle migliori frequenze
     selected_frequencies = []
     for _, row in combined_df.iterrows():
-        freq = row[1]
+        freq = row[0]
         if all(abs(freq - selected) > 0.1 for selected in selected_frequencies):  # Evita frequenze vicine
             selected_frequencies.append(freq)
         if len(selected_frequencies) == num_mics:
@@ -101,9 +101,9 @@ if uploaded_files:
 
     # Visualizzazione dei risultati
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=combined_df[1], y=combined_df[0], mode='lines', name='Disturbo'))
+    fig.add_trace(go.Scatter(x=combined_df[0], y=combined_df[1], mode='lines', name='Disturbo'))
     for freq in selected_frequencies:
-        fig.add_trace(go.Scatter(x=[combined_df.loc[combined_df[0] == freq, 1].values[0]], y=[freq],
+        fig.add_trace(go.Scatter(x=[freq], y=[combined_df.loc[combined_df[0] == freq, 1].values[0]],
                                  mode='markers', marker=dict(color='red', size=10), name=f'Frequenza {freq} MHz'))
 
     st.plotly_chart(fig)
